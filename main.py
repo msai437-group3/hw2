@@ -81,24 +81,31 @@ class EmojiAutoencoderCNN(nn.Module):
         # Encoder
         self.encoder = nn.Sequential(
             nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1),  # Output: 16 x 32 x 32
+            nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1),  # Output: 32 x 16 x 16
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),  # Output: 64 x 8 x 8
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),  # Output: 4x4x128
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),  # Output: 128 x 4 x 4
+            nn.BatchNorm2d(128),
             nn.ReLU(),
         )
         # Decoder
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 8x8x64
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 8 x 8 x 64
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 32 x 16 x 16
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 16 x 16 x 32
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 16 x 32 x 32
+            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 32 x 32 x 16
+            nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.ConvTranspose2d(16, 3, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 3 x 16 x 16
-            nn.ReLU(),
+            nn.ConvTranspose2d(16, 3, kernel_size=3, stride=2, padding=1, output_padding=1),  # Output: 64 x 64 x 3
+            nn.Sigmoid(),
         )
 
     def forward(self, x):
@@ -213,7 +220,9 @@ class EmojiAutoencoder(nn.Module):
         plt.savefig(fig_name, dpi=300, bbox_inches='tight')
         # plt.show()
 
-    def _denormalize(self, tensor, mean, std):
+    def _denormalize(self, tensor):
+        mean = [0.5, 0.5, 0.5]
+        std = [0.5, 0.5, 0.5]
         mean = torch.tensor(mean).view(3, 1, 1).to(tensor.device)
         std = torch.tensor(std).view(3, 1, 1).to(tensor.device)
         denormalized = tensor * std + mean
